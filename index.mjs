@@ -8,16 +8,20 @@ import {
   testDeleteFromRTDB,
   testReadFromRTDBWithCallback,
   testUpdateToRTDB,
-  sendTestData,
+  sendTestDataNew,
 } from "./lib/firebase/test-rtdb.mjs";
 import { startNotificationListener } from "./lib/firebase/listener.mjs";
 import { sendChatWA } from "./lib/whatsapp/sender.mjs";
 import { db } from "./lib/firebase/firebase.mjs";
+import {
+  notifyAdmin,
+  notifyUserConfirmByWeb,
+} from "./lib/api/NotifyAdminController.mjs";
 
 dotenv.config(); // ⬅️ Muat variabel dari .env ke dalam process.env
 
 const app = express();
-const PORT = process.env.PORT || 3000;
+const PORT = process.env.PORT || 3001;
 
 // middleware untuk parsing JSON
 app.use(express.json());
@@ -81,10 +85,88 @@ app.get("/test-rtdb/connect", async (req, res) => {
 });
 
 app.get("/test-rtdb/send-test-data", async (req, res) => {
-  await sendTestData();
+  await sendTestDataNew();
   return apiRes(res, {
     status: "success",
     message: "Data uji coba berhasil dikirim ke RTDB",
+    statusCode: 200,
+  });
+});
+
+/**
+ * Route untuk menjalankan bot
+ */
+
+app.post("/api/bot/wa/notify-admin", async (req, res) => {
+  // res memiliki idSurat, message
+  if (!req.body) {
+    return apiRes(res, {
+      status: "error",
+      message: "Missing data to transfer",
+      statusCode: 400,
+    });
+  }
+
+  const { idSurat, message } = req.body;
+  if (!idSurat || !message) {
+    return apiRes(res, {
+      status: "error",
+      message: "Missing Arguments",
+      statusCode: 400,
+    });
+  }
+  console.log(">> [API] notifyAdmin", { idSurat, message });
+  const result = await notifyAdmin(idSurat, message);
+  console.log("Hasil :", result);
+  if (!result) {
+    return apiRes(res, {
+      status: "error",
+      message: "Gagal mengirim pesan ke admin",
+      statusCode: 500,
+    });
+  }
+
+  return apiRes(res, {
+    status: "success",
+    message: "Pesan berhasil dikirim ke admin",
+    data: result,
+    statusCode: 200,
+  });
+});
+
+app.post("/api/bot/wa/notify-confirm", async (req, res) => {
+  // res memiliki idSurat, message
+  if (!req.body) {
+    return apiRes(res, {
+      status: "error",
+      message: "Missing data to transfer",
+      statusCode: 400,
+    });
+  }
+
+  const { idSurat, typeConfirm } = req.body;
+  if (!idSurat || !typeConfirm) {
+    return apiRes(res, {
+      status: "error",
+      message: "Missing Arguments",
+      statusCode: 400,
+    });
+  }
+  console.log(">> [API] notifyAdmin", { idSurat, typeConfirm });
+  const result = await notifyUserConfirmByWeb(idSurat, typeConfirm);
+  console.log("Hasil :", result);
+  if (!result) {
+    return apiRes(res, {
+      status: "error",
+      message: "Gagal mengirim pesan ke admin",
+      statusCode: 500,
+    });
+  }
+
+  return apiRes(res, {
+    status: "success",
+    message: "Pesan berhasil dikirim ke admin",
+    data: result,
     statusCode: 200,
   });
 });
@@ -101,9 +183,14 @@ startNotificationListener(async (data, key) => {
     const result = await sendChatWA(data.to, data.message);
 
     if (result) {
+      let refDb =
+        process.env.APP_ENV !== "local"
+          ? `notifikasi/${key}`
+          : `notifikasi_dev/${key}`;
+      console.log("➡️ Ref DB:", refDb);
       // Tunggu 5 detik sebelum menghapus node
       setTimeout(() => {
-        db.ref(`notifikasi/${key}`)
+        db.ref(refDb)
           .remove()
           .then(() => {
             console.log(`🗑️ Notifikasi ${key} berhasil dihapus dari RTDB.`);

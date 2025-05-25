@@ -1,6 +1,6 @@
 export function apiRes(
   res,
-  { status = "success", data = null, message = "", statusCode = 200 }
+  { status = "", data = null, message = "", statusCode = 200 }
 ) {
   return res.status(statusCode).json({
     status,
