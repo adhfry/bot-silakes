@@ -1,0 +1,60 @@
+name: Deploy Bot-WA
+
+on:
+  push:
+    branches:
+      - main
+      - dev
+
+jobs:
+  deploy-bot:
+    name: SSH & Deploy Bot-WA
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v3
+
+      - name: Extract Commit Message
+        id: commit
+        run: echo "MESSAGE=$(git log -1 --pretty=%B)" >> $GITHUB_ENV
+
+      # (optional) jika butuh parse commit message:
+      # - name: Parse Params from Commit Message
+      #   ...
+
+      - name: Setup SSH Agent
+        uses: webfactory/ssh-agent@v0.5.3
+        with:
+          ssh-private-key: ${{ secrets.SSH_PRIVATE_KEY }}
+
+      - name: Deploy via SSH
+        run: |
+          # Tentukan path berdasarkan branch
+          if [[ "${{ github.ref }}" == "refs/heads/main" ]]; then
+            DEPLOY_PATH="/var/www/bot.silakes.labkesdasumenep.id"
+          else
+            DEPLOY_PATH="/var/www/dev.bot.silakes.labkesdasumenep.id"
+          fi
+
+          echo "→ Deploying Bot-WA to $DEPLOY_PATH on ${{ github.ref }}"
+
+          ssh -o StrictHostKeyChecking=no ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }} << 'EOF'
+            set -e
+
+            cd $DEPLOY_PATH
+
+            echo "⏹️ Stop PM2 process bot-wa (if exists)"
+            pm2 stop bot-wa || true
+
+            echo "📥 Pull latest changes"
+            git pull origin ${GITHUB_REF##*/}
+
+            echo "📦 Install dependencies"
+            npm ci
+
+            echo "▶️ Start PM2 process bot-wa"
+            pm2 start bot-wa
+
+            echo "✅ Deployment Bot-WA selesai"
+          EOF

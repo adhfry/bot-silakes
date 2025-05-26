@@ -9,3 +9,17 @@ export function formatPhone(phone) {
   if (phone.startsWith("62")) return phone;
   return phone.replace(/^0/, "62");
 }
+
+/**
+ * Menghapus semua karakter non-digit dari string.
+ *
+ * @param {string} rawPhone  Nomor telepon raw, misal "628123456789@c.us"
+ * @return {string}          Hanya digit, misal "628123456789"
+ */
+export function filterPhone(rawPhone) {
+  if (typeof rawPhone !== "string") {
+    throw new TypeError("Parameter harus string");
+  }
+  // \D mencocokkan karakter non-digit; g = global
+  return rawPhone.replace(/\D+/g, "");
+}
