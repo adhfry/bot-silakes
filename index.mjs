@@ -2,6 +2,7 @@
 import express from "express";
 import dotenv from "dotenv";
 import { apiRes } from "./utils/apiRes.mjs";
+import { socket } from "./lib/phoenix/connectSocket.mjs";
 import {
   testWriteToRTDB,
   testReadFromRTDB,
@@ -206,7 +207,7 @@ startNotificationListener(async (data, key) => {
     console.error("❌ Data tidak valid:", data);
   }
 });
-
+socket.connect();
 app.listen(PORT, () => {
   console.log(`→ Server Express berjalan di http://localhost:${PORT}`);
 });
