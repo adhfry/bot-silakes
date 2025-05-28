@@ -18,6 +18,8 @@ import {
   notifyAdmin,
   notifyUserConfirmByWeb,
 } from "./lib/api/NotifyAdminController.mjs";
+import { formatPhone } from "./utils/formatPhoneNumber.mjs";
+import { sendPDF } from "./lib/api/SendMediaPatientController.mjs";
 
 dotenv.config(); // ⬅️ Muat variabel dari .env ke dalam process.env
 
@@ -167,6 +169,41 @@ app.post("/api/bot/wa/notify-confirm", async (req, res) => {
   return apiRes(res, {
     status: "success",
     message: "Pesan berhasil dikirim ke admin",
+    data: result,
+    statusCode: 200,
+  });
+});
+
+app.post("/api/bot/wa/send-chat", async (req, res) => {
+  if (!req.body) {
+    return apiRes(res, {
+      status: "error",
+      message: "Missing data to transfer",
+      statusCode: 400,
+    });
+  }
+
+  const { to, message, idSurat } = req.body;
+  if (!to || !message || !idSurat) {
+    return apiRes(res, {
+      status: "error",
+      message: "Missing Arguments",
+      statusCode: 400,
+    });
+  }
+  const result = await sendPDF(formatPhone(to), message, idSurat);
+  console.log("Hasil :", result);
+  if (!result) {
+    return apiRes(res, {
+      status: "error",
+      message: "Gagal mengirim pesan ke pasien",
+      statusCode: 500,
+    });
+  }
+
+  return apiRes(res, {
+    status: "success",
+    message: "Pesan berhasil dikirim ke pasien",
     data: result,
     statusCode: 200,
   });
