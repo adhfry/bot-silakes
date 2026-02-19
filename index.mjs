@@ -137,6 +137,41 @@ app.post("/api/bot/wa/notify-admin", async (req, res) => {
   });
 });
 
+app.post("/v1/api/wa/send-chat-message", async (req, res) => {
+  if (!req.body) {
+    return apiRes(res, {
+      status: "error",
+      message: "Missing data to transfer",
+      statusCode: 400,
+    });
+  }
+
+  const { to, message } = req.body;
+  if (!to || !message) {
+    return apiRes(res, {
+      status: "error",
+      message: "Missing 'to' or 'message'",
+      statusCode: 400,
+    });
+  }
+
+  const result = await sendChatWA(to, message);
+
+  if (!result) {
+    return apiRes(res, {
+      status: "error",
+      message: "Gagal mengirim pesan ke pasien",
+      statusCode: 500,
+    });
+  }
+
+  return apiRes(res, {
+    status: "success",
+    message: "Pesan berhasil dikirim ke nomor tujuan",
+    statusCode: 200,
+  });
+});
+
 app.post("/api/bot/wa/notify-confirm", async (req, res) => {
   // res memiliki idSurat, message
   if (!req.body) {
