@@ -110,16 +110,16 @@ app.post("/api/bot/wa/notify-admin", async (req, res) => {
     });
   }
 
-  const { idSurat, message } = req.body;
-  if (!idSurat || !message) {
+  const { message } = req.body;
+  if (!message) {
     return apiRes(res, {
       status: "error",
       message: "Missing Arguments",
       statusCode: 400,
     });
   }
-  console.log(">> [API] notifyAdmin", { idSurat, message });
-  const result = await notifyAdmin(idSurat, message);
+  console.log(">> [API] notifyAdmin", { message });
+  const result = await notifyAdmin(message);
   console.log("Hasil :", result);
   if (!result) {
     return apiRes(res, {
