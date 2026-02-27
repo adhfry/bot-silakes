@@ -12,7 +12,7 @@ import {
   sendTestDataNew,
 } from "./lib/firebase/test-rtdb.mjs";
 import { startNotificationListener } from "./lib/firebase/listener.mjs";
-import { sendChatWA } from "./lib/whatsapp/sender.mjs";
+import { sendChatWA, sendGroupChatWA } from "./lib/whatsapp/sender.mjs";
 import { db } from "./lib/firebase/firebase.mjs";
 import {
   notifyAdmin,
@@ -147,6 +147,7 @@ app.post("/v1/api/wa/send-chat-message", async (req, res) => {
   }
 
   const { to, message } = req.body;
+  console.log(">> [API] sendChatMessage", { to, message });
   if (!to || !message) {
     return apiRes(res, {
       status: "error",
@@ -156,6 +157,7 @@ app.post("/v1/api/wa/send-chat-message", async (req, res) => {
   }
 
   const result = await sendChatWA(to, message);
+  console.log("Hasil sendChatWA:", result);
 
   if (!result) {
     return apiRes(res, {
@@ -168,6 +170,43 @@ app.post("/v1/api/wa/send-chat-message", async (req, res) => {
   return apiRes(res, {
     status: "success",
     message: "Pesan berhasil dikirim ke nomor tujuan",
+    statusCode: 200,
+  });
+});
+
+app.post("/v1/api/wa/send-chat-group-message", async (req, res) => {
+  if (!req.body) {
+    return apiRes(res, {
+      status: "error",
+      message: "Missing data to transfer",
+      statusCode: 400,
+    });
+  }
+
+  const { to, message } = req.body;
+  console.log(">> [API] sendChatGroupMessage", { to, message });
+  if (!to || !message) {
+    return apiRes(res, {
+      status: "error",
+      message: "Missing 'to' or 'message'",
+      statusCode: 400,
+    });
+  }
+
+  const result = await sendGroupChatWA(to, message);
+  console.log("Hasil sendGroupChatWA:", result);
+
+  if (!result) {
+    return apiRes(res, {
+      status: "error",
+      message: "Gagal mengirim pesan ke grup",
+      statusCode: 500,
+    });
+  }
+
+  return apiRes(res, {
+    status: "success",
+    message: "Pesan berhasil dikirim ke grup tujuan",
     statusCode: 200,
   });
 });
