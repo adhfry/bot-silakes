@@ -20,6 +20,7 @@ import {
 } from "./lib/api/NotifyAdminController.mjs";
 import { formatPhone } from "./utils/formatPhoneNumber.mjs";
 import { sendPDF } from "./lib/api/SendMediaPatientController.mjs";
+import { sendChatMessage } from "./lib/api/SendChatMessageController.mjs";
 
 dotenv.config(); // ⬅️ Muat variabel dari .env ke dalam process.env
 
@@ -170,6 +171,57 @@ app.post("/v1/api/wa/send-chat-message", async (req, res) => {
   return apiRes(res, {
     status: "success",
     message: "Pesan berhasil dikirim ke nomor tujuan",
+    statusCode: 200,
+  });
+});
+
+/**
+ * Kontrak khusus produli (WhatsappReminderChannel.php, "kontrak API sudah fix dari user"):
+ * POST /send/chat-message/:apikey, body {phone, message, link_image}. API key di path (bukan
+ * header) -- itu kontrak yang sudah ditentukan sebelumnya, disamakan di sini apa adanya.
+ */
+app.post("/send/chat-message/:apikey", async (req, res) => {
+  const { apikey } = req.params;
+  if (!process.env.BOT_WA_API_KEY || apikey !== process.env.BOT_WA_API_KEY) {
+    return apiRes(res, {
+      status: "error",
+      message: "API key tidak valid",
+      statusCode: 401,
+    });
+  }
+
+  if (!req.body) {
+    return apiRes(res, {
+      status: "error",
+      message: "Missing data to transfer",
+      statusCode: 400,
+    });
+  }
+
+  const { phone, message, link_image } = req.body;
+  console.log(">> [API] sendChatMessage (produli)", { phone, message, link_image });
+  if (!phone || !message) {
+    return apiRes(res, {
+      status: "error",
+      message: "Missing 'phone' or 'message'",
+      statusCode: 400,
+    });
+  }
+
+  const result = await sendChatMessage(formatPhone(phone), message, link_image);
+  console.log("Hasil sendChatMessage (produli):", result);
+
+  if (!result) {
+    return apiRes(res, {
+      status: "error",
+      message: "Gagal mengirim pesan",
+      statusCode: 500,
+    });
+  }
+
+  return apiRes(res, {
+    status: "success",
+    message: "Pesan berhasil dikirim",
     statusCode: 200,
   });
 });
