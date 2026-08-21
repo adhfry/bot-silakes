@@ -3,3 +3,5 @@
 node_modules
 package-lock.json
 .env
+data/queue.json
+data/queue.json.tmp
