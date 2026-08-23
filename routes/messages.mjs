@@ -8,11 +8,11 @@ export const descriptors = [
     path: "/v1/api/wa/send-chat-message",
     description: "Kirim pesan teks umum ke satu nomor",
     handler: async (req, res) => {
-      const { to, message } = req.body || {};
+      const { to, message, lane } = req.body || {};
       if (!to || !message) {
         return apiRes(res, { status: "error", message: "Missing 'to' or 'message'", statusCode: 400 });
       }
-      const result = await sendChatWA(to, message);
+      const result = await sendChatWA(to, message, { lane });
       if (!result) {
         return apiRes(res, { status: "error", message: "Gagal mengirim pesan ke nomor tujuan", statusCode: 500 });
       }
@@ -28,11 +28,11 @@ export const descriptors = [
     path: "/v1/api/wa/send-chat-group-message",
     description: "Kirim pesan teks umum ke grup",
     handler: async (req, res) => {
-      const { to, message } = req.body || {};
+      const { to, message, lane } = req.body || {};
       if (!to || !message) {
         return apiRes(res, { status: "error", message: "Missing 'to' or 'message'", statusCode: 400 });
       }
-      const result = await sendGroupChatWA(to, message);
+      const result = await sendGroupChatWA(to, message, { lane });
       if (!result) {
         return apiRes(res, { status: "error", message: "Gagal mengirim pesan ke grup tujuan", statusCode: 500 });
       }
