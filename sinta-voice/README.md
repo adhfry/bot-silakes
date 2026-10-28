@@ -16,6 +16,6 @@ pm2 start index.mjs --name sinta-voice
 pm2 save
 ```
 
-Variabel opsional: `SINTA_VOICE_PORT` (bawaan 4310), `SINTA_VOICE_GAIN` (penguat suara SINTA, bawaan 1.6), `SINTA_VOICE_DEBUG=1` (log pesan Gemini).
+Variabel opsional: `SINTA_VOICE_PORT` (bawaan 4310), `SINTA_VOICE_GAIN` (penguat suara SINTA dengan pembatas lembut, bawaan 2.6), `SINTA_VOICE_DEBUG=1` (log pesan Gemini).
 
 Cek: `curl -s http://127.0.0.1:4310/health`.

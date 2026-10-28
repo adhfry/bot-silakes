@@ -23,18 +23,20 @@ import { startConversation } from "./lib/conversation.mjs";
 const PORT = Number(process.env.SINTA_VOICE_PORT || 4310);
 const HOST = "127.0.0.1";
 const MAX_CONCURRENT = 3;
-// Suara SINTA dikeraskan sedikit (dibatasi supaya tidak pecah).
-const OUTPUT_GAIN = Number(process.env.SINTA_VOICE_GAIN || 1.6);
+// Suara SINTA dikeraskan dengan pembatas lembut (tanh): bagian pelan naik
+// sekitar 2,6x, puncak tidak pecah. 1 = suara asli.
+const OUTPUT_GAIN = Number(process.env.SINTA_VOICE_GAIN || 2.6);
 const OUT_RATE = 24000;
 const FRAME = OUT_RATE / 100; // 10 ms
 
 const active = new Map(); // call_id -> { hangup }
 const log = (id, m) => console.log(`[${new Date().toISOString()}] #${id} ${m}`);
 
+const NORM = 32767 / Math.tanh(OUTPUT_GAIN);
 function amplify(pcm) {
-  if (OUTPUT_GAIN === 1) return pcm;
+  if (OUTPUT_GAIN <= 1) return pcm;
   const out = new Int16Array(pcm.length);
-  for (let i = 0; i < pcm.length; i++) out[i] = Math.max(-32768, Math.min(32767, Math.round(pcm[i] * OUTPUT_GAIN)));
+  for (let i = 0; i < pcm.length; i++) out[i] = Math.round(NORM * Math.tanh((OUTPUT_GAIN * pcm[i]) / 32767));
   return out;
 }
 
