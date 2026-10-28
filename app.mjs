@@ -12,6 +12,7 @@ import { descriptors as notificationRoutes } from "./routes/notifications.mjs";
 import { descriptors as messageRoutes } from "./routes/messages.mjs";
 import { descriptors as produliRoutes } from "./routes/produli.mjs";
 import { descriptors as queueStatusRoutes } from "./routes/queueStatus.mjs";
+import { descriptors as outreachRoutes } from "./routes/outreach.mjs";
 
 export const app = express();
 app.use(express.json());
@@ -22,6 +23,7 @@ mountRoutes(app, [
   ...messageRoutes,
   ...produliRoutes,
   ...queueStatusRoutes,
+  ...outreachRoutes,
 ]);
 
 export { registry };
