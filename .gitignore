@@ -5,3 +5,5 @@ package-lock.json
 .env
 data/queue.json
 data/queue.json.tmp
+
+.wa-ready-retries
