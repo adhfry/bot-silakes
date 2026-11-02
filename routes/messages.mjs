@@ -16,8 +16,10 @@ export const descriptors = [
     path: "/v1/api/wa/send-chat-message",
     description: "Kirim pesan ke satu nomor; media_url (opsional) = lampiran, pesan jadi keterangannya",
     handler: async (req, res) => {
-      const { to, message, lane, media_url: mediaUrl, media_filename: mediaFilename } = req.body || {};
-      if (!to || !message) {
+      const { to, lane, media_url: mediaUrl, media_filename: mediaFilename, text_after: textAfter } = req.body || {};
+      const message = req.body?.message || "";
+      // Pesan boleh kosong bila ada lampiran (kirim berkas saja).
+      if (!to || (!message && !mediaUrl)) {
         return apiRes(res, { status: "error", message: "Missing 'to' or 'message'", statusCode: 400 });
       }
       let result = null;
@@ -25,7 +27,7 @@ export const descriptors = [
         try {
           const media = await MessageMedia.fromUrl(mediaUrl, { unsafeMime: true, filename: mediaFilename });
           if (mediaFilename) media.filename = mediaFilename;
-          result = await sendChatWAMedia(to, message, media, { lane, link: mediaUrl });
+          result = await sendChatWAMedia(to, message, media, { lane, link: mediaUrl, textAfter: textAfter === true });
         } catch (error) {
           // Lampiran gagal diunduh: teks + tautan tetap sampai.
           console.error("❌ Gagal mengunduh lampiran, kirim teks + tautan:", error.message);
@@ -48,8 +50,9 @@ export const descriptors = [
     path: "/v1/api/wa/send-chat-group-message",
     description: "Kirim pesan ke grup; media_url (opsional) = lampiran, pesan jadi keterangannya",
     handler: async (req, res) => {
-      const { to, message, lane, media_url: mediaUrl, media_filename: mediaFilename } = req.body || {};
-      if (!to || !message) {
+      const { to, lane, media_url: mediaUrl, media_filename: mediaFilename, text_after: textAfter } = req.body || {};
+      const message = req.body?.message || "";
+      if (!to || (!message && !mediaUrl)) {
         return apiRes(res, { status: "error", message: "Missing 'to' or 'message'", statusCode: 400 });
       }
       let result = null;
@@ -57,7 +60,7 @@ export const descriptors = [
         try {
           const media = await MessageMedia.fromUrl(mediaUrl, { unsafeMime: true, filename: mediaFilename });
           if (mediaFilename) media.filename = mediaFilename;
-          result = await sendGroupChatWAMedia(to, message, media, { lane, link: mediaUrl });
+          result = await sendGroupChatWAMedia(to, message, media, { lane, link: mediaUrl, textAfter: textAfter === true });
         } catch (error) {
           // Lampiran gagal diunduh: teks + tautan tetap sampai ke grup.
           console.error("❌ Gagal mengunduh lampiran grup, kirim teks + tautan:", error.message);
