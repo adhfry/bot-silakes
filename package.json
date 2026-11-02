@@ -5,7 +5,8 @@
   "scripts": {
     "dev": "nodemon",
     "route:list": "node bin/route-list.mjs",
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "postinstall": "node scripts/patch-wwebjs.mjs"
   },
   "keywords": [
     "ai",
