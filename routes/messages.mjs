@@ -1,21 +1,38 @@
 // routes/messages.mjs
 import { apiRes } from "../utils/apiRes.mjs";
 import pkg from "whatsapp-web.js";
-import { sendChatWA, sendGroupChatWA, sendGroupChatWAMedia } from "../lib/whatsapp/sender.mjs";
+import { sendChatWA, sendChatWAMedia, sendGroupChatWA, sendGroupChatWAMedia } from "../lib/whatsapp/sender.mjs";
 
 const { MessageMedia } = pkg;
+
+/** Pesan + tautan unduhan lampiran (cadangan bila lampiran tidak bisa dikirim). */
+export function withLink(message, url) {
+  return `${message}\n\nSurat (PDF): ${url}`;
+}
 
 export const descriptors = [
   {
     method: "post",
     path: "/v1/api/wa/send-chat-message",
-    description: "Kirim pesan teks umum ke satu nomor",
+    description: "Kirim pesan ke satu nomor; media_url (opsional) = lampiran, pesan jadi keterangannya",
     handler: async (req, res) => {
-      const { to, message, lane } = req.body || {};
+      const { to, message, lane, media_url: mediaUrl, media_filename: mediaFilename } = req.body || {};
       if (!to || !message) {
         return apiRes(res, { status: "error", message: "Missing 'to' or 'message'", statusCode: 400 });
       }
-      const result = await sendChatWA(to, message, { lane });
+      let result = null;
+      if (mediaUrl) {
+        try {
+          const media = await MessageMedia.fromUrl(mediaUrl, { unsafeMime: true, filename: mediaFilename });
+          if (mediaFilename) media.filename = mediaFilename;
+          result = await sendChatWAMedia(to, message, media, { lane, link: mediaUrl });
+        } catch (error) {
+          // Lampiran gagal diunduh: teks + tautan tetap sampai.
+          console.error("❌ Gagal mengunduh lampiran, kirim teks + tautan:", error.message);
+          result = await sendChatWA(to, withLink(message, mediaUrl), { lane });
+        }
+      }
+      result = result || (await sendChatWA(to, message, { lane }));
       if (!result) {
         return apiRes(res, { status: "error", message: "Gagal mengirim pesan ke nomor tujuan", statusCode: 500 });
       }
@@ -40,10 +57,11 @@ export const descriptors = [
         try {
           const media = await MessageMedia.fromUrl(mediaUrl, { unsafeMime: true, filename: mediaFilename });
           if (mediaFilename) media.filename = mediaFilename;
-          result = await sendGroupChatWAMedia(to, message, media, { lane });
+          result = await sendGroupChatWAMedia(to, message, media, { lane, link: mediaUrl });
         } catch (error) {
-          // Lampiran gagal diunduh: pesan teks tetap sampai ke grup.
-          console.error("❌ Gagal mengunduh lampiran grup, kirim teks saja:", error.message);
+          // Lampiran gagal diunduh: teks + tautan tetap sampai ke grup.
+          console.error("❌ Gagal mengunduh lampiran grup, kirim teks + tautan:", error.message);
+          result = await sendGroupChatWA(to, withLink(message, mediaUrl), { lane });
         }
       }
       result = result || (await sendGroupChatWA(to, message, { lane }));
