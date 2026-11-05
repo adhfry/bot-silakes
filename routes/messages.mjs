@@ -82,14 +82,14 @@ export const descriptors = [
   {
     method: "post",
     path: "/v1/api/wa/revoke-messages",
-    description: "Tarik pesan bot: to = daftar nomor/ID chat, contains = kata kunci (semua harus ada), everyone (bawaan true)",
+    description: "Tarik pesan bot yang memuat semua kata kunci contains[] (min. 2); everyone bawaan true, false = hapus untuk bot",
     handler: async (req, res) => {
-      const { to, contains, everyone, since_minutes: sinceMinutes } = req.body || {};
-      if (!Array.isArray(to) || !to.length || !Array.isArray(contains) || !contains.length) {
-        return apiRes(res, { status: "error", message: "Wajib: to[] dan contains[]", statusCode: 400 });
+      const { contains, everyone, since_minutes: sinceMinutes } = req.body || {};
+      if (!Array.isArray(contains) || contains.length < 2) {
+        return apiRes(res, { status: "error", message: "Wajib: contains[] minimal 2 kata kunci", statusCode: 400 });
       }
       try {
-        const data = await revokeMessages({ to, contains, everyone: everyone !== false, sinceMinutes: Number(sinceMinutes) || 2880 });
+        const data = await revokeMessages({ contains, everyone: everyone !== false, sinceMinutes: Number(sinceMinutes) || 2880 });
         return apiRes(res, { status: "success", message: "Selesai", statusCode: 200, data });
       } catch (error) {
         return apiRes(res, { status: "error", message: error.message || String(error), statusCode: 500 });
