@@ -2,6 +2,7 @@
 import { apiRes } from "../utils/apiRes.mjs";
 import pkg from "whatsapp-web.js";
 import { sendChatWA, sendChatWAMedia, sendGroupChatWA, sendGroupChatWAMedia } from "../lib/whatsapp/sender.mjs";
+import { revokeMessages } from "../lib/whatsapp/revoke.mjs";
 
 const { MessageMedia } = pkg;
 
@@ -76,6 +77,23 @@ export const descriptors = [
         message: "Pesan berhasil dimasukkan ke antrean pengiriman",
         statusCode: 200,
       });
+    },
+  },
+  {
+    method: "post",
+    path: "/v1/api/wa/revoke-messages",
+    description: "Tarik pesan bot: to = daftar nomor/ID chat, contains = kata kunci (semua harus ada), everyone (bawaan true)",
+    handler: async (req, res) => {
+      const { to, contains, everyone, since_minutes: sinceMinutes } = req.body || {};
+      if (!Array.isArray(to) || !to.length || !Array.isArray(contains) || !contains.length) {
+        return apiRes(res, { status: "error", message: "Wajib: to[] dan contains[]", statusCode: 400 });
+      }
+      try {
+        const data = await revokeMessages({ to, contains, everyone: everyone !== false, sinceMinutes: Number(sinceMinutes) || 2880 });
+        return apiRes(res, { status: "success", message: "Selesai", statusCode: 200, data });
+      } catch (error) {
+        return apiRes(res, { status: "error", message: error.message || String(error), statusCode: 500 });
+      }
     },
   },
 ];
