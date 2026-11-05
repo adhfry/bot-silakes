@@ -3,6 +3,7 @@ import { apiRes } from "../utils/apiRes.mjs";
 import pkg from "whatsapp-web.js";
 import { sendChatWA, sendChatWAMedia, sendGroupChatWA, sendGroupChatWAMedia } from "../lib/whatsapp/sender.mjs";
 import { revokeMessages } from "../lib/whatsapp/revoke.mjs";
+import { sweepJaspel } from "../lib/whatsapp/jaspelPrivacy.mjs";
 
 const { MessageMedia } = pkg;
 
@@ -94,6 +95,15 @@ export const descriptors = [
       } catch (error) {
         return apiRes(res, { status: "error", message: error.message || String(error), statusCode: 500 });
       }
+    },
+  },
+  {
+    method: "post",
+    path: "/v1/api/wa/jaspel-sweep",
+    description: "Sapu bersih: semua chat tentang jaspel dihapus untuk bot (hapus untuk saya)",
+    handler: async (req, res) => {
+      const data = await sweepJaspel();
+      return apiRes(res, { status: "success", message: "Pesan jaspel diantrekan untuk dihapus", statusCode: 200, data });
     },
   },
 ];
