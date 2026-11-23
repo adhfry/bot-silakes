@@ -6,6 +6,7 @@
 // client.initialize() sekarang dibungkus startWhatsAppClient() yang cuma
 // dipanggil dari index.mjs.
 import express from "express";
+import "./lib/api/silakesAuth.mjs";
 import { mountRoutes, registry } from "./lib/routing/registerRoutes.mjs";
 import { descriptors as healthRoutes } from "./routes/health.mjs";
 import { descriptors as notificationRoutes } from "./routes/notifications.mjs";

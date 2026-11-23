@@ -5,6 +5,9 @@
 import dotenv from "dotenv";
 dotenv.config();
 
+// Kunci API ke setiap panggilan bot -> SiLAKES (dipasang sebelum modul lain memakai axios).
+import "./lib/api/silakesAuth.mjs";
+
 import { app } from "./app.mjs";
 import { startWhatsAppClient } from "./lib/whatsapp/client.mjs";
 import { startWorker } from "./lib/queue/index.mjs";
